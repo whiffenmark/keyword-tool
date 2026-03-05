@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Keyword Research Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap');
+  :root{
+    --bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:#1e1e2e;
+    --accent:#00e5ff;--accent2:#7c3aed;--text:#e2e8f0;--muted:#64748b;
+    --success:#10b981;--danger:#f43f5e;--warn:#f59e0b;
+    --paa:#f59e0b;--rel:#06b6d4;--pasf:#ec4899;--local:#1a73e8;
+    --bing:#008272;--reddit:#ff4500;--quora:#b92b27;--youtube:#ff0000;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:20px 14px 120px;}
+  header{text-align:center;margin-bottom:22px;padding-top:12px;}
+  header h1{font-family:'Space Mono',monospace;font-size:clamp(1.1rem,5vw,1.7rem);background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  header p{color:var(--muted);font-size:0.74rem;margin-top:4px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;max-width:700px;margin-left:auto;margin-right:auto;}
+  .card-title{font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .card-title span{flex:1;}
+  .collapsible-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 4px;transition:transform 0.2s;}
+  .collapsed .collapsible-btn{transform:rotate(-90deg);}
+  .collapsible-body{overflow:hidden;}
+  .input-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .input-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .input-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;}
+  input[type="text"],input[type="number"],select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;padding:9px 12px;outline:none;transition:border-color 0.2s;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  input::placeholder,textarea::placeholder{color:var(--muted);}
+  select option{background:var(--surface);}
+  label.field-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px;}
+  .field-wrap{display:flex;flex-direction:column;}
+  button{border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;padding:10px 16px;transition:opacity 0.2s,transform 0.1s;}
+  button:active{transform:scale(0.97);}
+  button:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+  .btn-stop{background:var(--danger);color:#fff;}
+  .btn-ghost{background:var(--border);color:var(--text);}
+  .section-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;margin-top:12px;}
+  .modules-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .module-card{border:1px solid var(--border);border-radius:9px;padding:9px 11px;cursor:pointer;transition:border-color 0.2s,background 0.2s;display:flex;align-items:center;gap:9px;user-select:none;}
+  .module-card.active{background:rgba(255,255,255,0.04);}
+  .module-card.active.ac    {border-color:var(--accent);}
+  .module-card.active.bing  {border-color:var(--bing);}
+  .module-card.active.paa   {border-color:var(--paa);}
+  .module-card.active.rel   {border-color:var(--rel);}
+  .module-card.active.pasf  {border-color:var(--pasf);}
+  .module-card.active.local {border-color:var(--local);}
+  .module-card.active.reddit{border-color:var(--reddit);}
+  .module-card.active.quora {border-color:var(--quora);}
+  .module-card.active.youtube{border-color:var(--youtube);}
+  .module-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .ac .module-dot{background:var(--accent);}
+  .bing .module-dot{background:var(--bing);}
+  .paa .module-dot{background:var(--paa);}
+  .rel .module-dot{background:var(--rel);}
+  .pasf .module-dot{background:var(--pasf);}
+  .local .module-dot{background:var(--local);}
+  .module-card.reddit .module-dot{background:var(--reddit);}
+  .module-card.quora .module-dot{background:var(--quora);}
+  .module-card.youtube .module-dot{background:var(--youtube);}
+  .module-name{font-size:0.78rem;font-weight:600;}
+  .module-desc{font-size:0.65rem;color:var(--muted);margin-top:1px;}
+  .mode-row{margin-top:10px;padding:10px 11px;background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.1);border-radius:9px;}
+  .mode-btns{display:flex;gap:6px;flex-wrap:wrap;}
+  .mode-btn{font-size:0.72rem;font-weight:600;padding:5px 10px;border-radius:6px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s;user-select:none;}
+  .mode-btn.active-mode{border-color:var(--accent);color:var(--accent);background:rgba(0,229,255,0.08);}
+  .modifier-view-btn{font-size:0.72rem;font-weight:600;padding:5px 10px;border-radius:6px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:transparent;transition:all 0.2s;}
+  .modifier-view-btn.active{border-color:var(--accent2);color:var(--accent2);background:rgba(124,58,237,0.08);}
+  .chip-group-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;}
+  .chip-group{display:flex;flex-wrap:wrap;gap:4px;}
+  .chip{font-size:0.72rem;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.15s;user-select:none;background:transparent;}
+  .chip.on{border-color:var(--accent2);color:var(--accent2);background:rgba(124,58,237,0.1);}
+  .chip.custom.on{border-color:var(--paa);color:var(--paa);background:rgba(245,158,11,0.1);}
+  .toggle-row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .toggle-label{font-size:0.8rem;color:var(--muted);display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;}
+  .toggle{position:relative;width:36px;height:20px;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--border);border-radius:20px;transition:background 0.2s;}
+  .slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.2s;}
+  .toggle input:checked+.slider{background:var(--accent2);}
+  .toggle input:checked+.slider::before{transform:translateX(16px);}
+  .depth-note{font-size:0.68rem;color:var(--warn);display:none;}
+  .depth-note.visible{display:block;}
+  .bulk-hint{font-size:0.68rem;color:var(--muted);margin-top:5px;}
+  .bulk-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:6px;padding:2px 8px;font-size:0.72rem;color:var(--accent);margin:2px;}
+  .bulk-tag button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.75rem;padding:0;min-width:0;border-radius:0;}
+  .progress-wrap{margin-top:12px;display:none;}
+  .progress-wrap.visible{display:block;}
+  .progress-meta{display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-bottom:4px;font-family:'Space Mono',monospace;}
+  .progress-bar-bg{height:3px;background:var(--border);border-radius:4px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 0.3s ease;width:0%;}
+  .current-query{font-size:0.65rem;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .seed-queue{font-size:0.65rem;color:var(--accent2);margin-top:3px;font-family:'Space Mono',monospace;}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .stat{text-align:center;min-width:55px;}
+  .stat-num{font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--accent);}
+  .stat-label{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+  .tab{padding:4px 7px;border-radius:6px;font-size:0.68rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.2s;display:flex;align-items:center;gap:3px;}
+  .tab .cnt{background:var(--border);border-radius:3px;padding:1px 3px;font-size:0.58rem;font-family:'Space Mono',monospace;}
+  .tab.active-ac    {border-color:var(--accent); color:var(--accent);}
+  .tab.active-bing  {border-color:var(--bing);   color:var(--bing);}
+  .tab.active-paa   {border-color:var(--paa);    color:var(--paa);}
+  .tab.active-rel   {border-color:var(--rel);    color:var(--rel);}
+  .tab.active-pasf  {border-color:var(--pasf);   color:var(--pasf);}
+  .tab.active-local {border-color:var(--local);  color:var(--local);}
+  .tab.active-reddit{border-color:var(--reddit); color:var(--reddit);}
+  .tab.active-quora {border-color:var(--quora);  color:var(--quora);}
+  .tab.active-youtube{border-color:var(--youtube);color:var(--youtube);}
+  .tab.active-all   {border-color:var(--success);color:var(--success);}
+  .tab.active-freq  {border-color:var(--accent2);color:var(--accent2);}
+  .results-panel{display:none;}
+  .results-panel.active{display:block;}
+  .results-toolbar{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+  .results-toolbar input{flex:1;min-width:100px;font-size:0.78rem;padding:6px 10px;}
+  .sort-btn{font-size:0.65rem;padding:5px 8px;background:var(--border);color:var(--muted);border-radius:5px;border:1px solid transparent;}
+  .sort-btn.active{background:rgba(0,229,255,0.08);border-color:var(--accent);color:var(--accent);}
+  .results-list{list-style:none;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+  .results-list li{padding:6px 9px;border-radius:6px;font-size:0.83rem;display:flex;justify-content:space-between;align-items:center;animation:fadeSlide 0.15s ease forwards;opacity:0;cursor:pointer;transition:background 0.15s;}
+  .results-list li:hover{background:rgba(255,255,255,0.05);}
+  .results-list li.hidden{display:none;}
+  .results-list li:nth-child(odd){background:rgba(255,255,255,0.03);}
+  .kw-text{color:var(--text);}
+  .kw-badge{font-size:0.58rem;color:var(--muted);font-family:'Space Mono',monospace;background:var(--border);padding:2px 4px;border-radius:3px;flex-shrink:0;margin-left:5px;white-space:nowrap;}
+  .kw-badge.reddit{color:var(--reddit);}
+  .kw-badge.quora{color:var(--quora);}
+  .freq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;max-height:280px;overflow-y:auto;}
+  .freq-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;}
+  .freq-word{font-size:0.78rem;font-weight:600;}
+  .freq-count{font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--accent2);background:rgba(124,58,237,0.1);padding:2px 5px;border-radius:3px;}
+  .freq-bar-wrap{margin-top:3px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .freq-bar{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;}
+  .biz-card{background:rgba(26,115,232,0.05);border:1px solid rgba(26,115,232,0.18);border-radius:10px;padding:12px;margin-bottom:8px;animation:fadeSlide 0.2s ease forwards;opacity:0;}
+  .biz-name{font-size:0.9rem;font-weight:600;margin-bottom:5px;}
+  .biz-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:3px;}
+  .biz-pill{font-size:0.68rem;color:var(--muted);background:var(--border);padding:2px 7px;border-radius:20px;}
+  .biz-pill.rating{color:#f59e0b;}
+  .biz-address{font-size:0.72rem;color:var(--muted);margin-top:3px;}
+  .history-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;border:1px solid var(--border);margin-bottom:6px;}
+  .history-item:hover{background:rgba(255,255,255,0.03);}
+  .history-seed{font-size:0.82rem;font-weight:600;flex:1;}
+  .history-meta{font-size:0.63rem;color:var(--muted);font-family:'Space Mono',monospace;}
+  .history-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:2px 4px;min-width:0;border-radius:4px;}
+  .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .btn-dl{border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;padding:9px 6px;color:#fff;}
+  .btn-dl:disabled{opacity:0.3;cursor:not-allowed;}
+  .btn-dl.ac    {background:linear-gradient(135deg,#00b4cc,#7c3aed);}
+  .btn-dl.bing  {background:linear-gradient(135deg,#005a52,#008272);}
+  .btn-dl.paa   {background:linear-gradient(135deg,#d97706,#f59e0b);}
+  .btn-dl.rel   {background:linear-gradient(135deg,#0891b2,#06b6d4);}
+  .btn-dl.pasf  {background:linear-gradient(135deg,#be185d,#ec4899);}
+  .btn-dl.reddit{background:linear-gradient(135deg,#c73a00,#ff4500);}
+  .btn-dl.quora {background:linear-gradient(135deg,#8b1a17,#b92b27);}
+  .btn-dl.youtube{background:linear-gradient(135deg,#cc0000,#ff0000);}
+  .btn-xlsx{background:linear-gradient(135deg,#166534,#16a34a);color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:12px;width:100%;margin-top:7px;}
+  .btn-xlsx:disabled{opacity:0.3;cursor:not-allowed;}
+  .xlsx-note{font-size:0.63rem;color:var(--muted);margin-top:4px;text-align:center;}
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:translateY(0);}}
+  .empty-state{text-align:center;padding:22px 16px;color:var(--muted);font-size:0.78rem;}
+  .empty-state .icon{font-size:1.4rem;margin-bottom:6px;}
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--success);color:#fff;padding:9px 16px;border-radius:9px;font-size:0.8rem;font-weight:600;transition:transform 0.3s ease;z-index:999;white-space:nowrap;}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+  #toast.error{background:var(--danger);}
+  .serp-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;animation:fadeSlide 0.15s ease forwards;opacity:0;}
+  .serp-card.hidden{display:none;}
+  .serp-card-head{display:flex;align-items:center;gap:8px;margin-bottom:0;}
+  .serp-urls{display:none;margin-top:7px;}
+  .serp-urls.open{display:block;}
+  .serp-engine-badge{font-size:0.6rem;font-family:'Space Mono',monospace;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+  .serp-kw-label{font-size:0.82rem;font-weight:600;flex:1;color:var(--text);}
+  .serp-url-count{font-size:0.6rem;color:var(--muted);font-family:'Space Mono',monospace;white-space:nowrap;}
+  .serp-url-row{display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .serp-url-row:last-child{border-bottom:none;}
+  .serp-rank{font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--accent2);min-width:16px;padding-top:2px;text-align:right;flex-shrink:0;}
+  .serp-url-info{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .serp-url{font-size:0.72rem;color:var(--accent);text-decoration:none;word-break:break-all;line-height:1.3;}
+  .serp-url:hover{text-decoration:underline;}
+  .serp-domain{font-size:0.6rem;color:var(--muted);font-family:'Space Mono',monospace;}
+  .pkw-row{padding:5px 8px;border-radius:6px;font-size:0.8rem;display:flex;align-items:center;gap:7px;animation:fadeSlide 0.15s ease forwards;opacity:0;}
+  .pkw-row:nth-child(odd){background:rgba(255,255,255,0.03);}
+  .pkw-row.is-new{background:rgba(16,185,129,0.08);border-left:2px solid var(--success);}
+  .pkw-row.hidden{display:none;}
+  .pkw-text{flex:1;color:var(--text);}
+  .pkw-badge-zone{font-size:0.55rem;color:var(--accent2);font-family:'Space Mono',monospace;background:rgba(124,58,237,0.1);padding:1px 4px;border-radius:3px;flex-shrink:0;}
+  .pkw-badge-zone.schema{color:var(--warn);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);}
+  .pkw-badge-src{font-size:0.55rem;color:var(--muted);font-family:'Space Mono',monospace;background:var(--border);padding:1px 4px;border-radius:3px;flex-shrink:0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pkw-badge-new{font-size:0.55rem;color:var(--success);font-family:'Space Mono',monospace;background:rgba(16,185,129,0.1);padding:1px 5px;border-radius:3px;flex-shrink:0;border:1px solid rgba(16,185,129,0.3);}
+  .pkw-score{font-size:0.58rem;color:var(--warn);font-family:'Space Mono',monospace;flex-shrink:0;min-width:28px;text-align:right;}
+  .pkw-page-sep{padding:6px 8px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);border-radius:6px;font-size:0.68rem;color:var(--accent2);margin:4px 0;display:flex;align-items:center;gap:6px;}
+  .schema-paa-wrap{margin:4px 0 8px;}
+  .schema-paa-header{font-size:0.65rem;color:var(--paa);font-family:'Space Mono',monospace;padding:4px 8px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+  .schema-paa-header code{background:rgba(245,158,11,0.12);padding:1px 5px;border-radius:3px;font-size:0.62rem;}
+  .schema-paa-card{background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.18);border-radius:8px;padding:8px 10px;margin-bottom:5px;animation:fadeSlide 0.15s ease forwards;opacity:0;}
+  .schema-paa-card.is-new{background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.25);}
+  .paa-q{display:flex;align-items:flex-start;gap:7px;margin-bottom:3px;}
+  .paa-q-icon{flex-shrink:0;width:18px;height:18px;border-radius:4px;background:rgba(245,158,11,0.2);color:var(--paa);font-size:0.6rem;font-weight:700;font-family:'Space Mono',monospace;display:flex;align-items:center;justify-content:center;}
+  .paa-q-text{font-size:0.82rem;font-weight:600;color:var(--text);flex:1;line-height:1.4;}
+  .paa-a{display:flex;align-items:flex-start;gap:7px;margin-top:3px;}
+  .paa-a-icon{flex-shrink:0;width:18px;height:18px;border-radius:4px;background:rgba(100,116,139,0.15);color:var(--muted);font-size:0.6rem;font-weight:700;font-family:'Space Mono',monospace;display:flex;align-items:center;justify-content:center;}
+  .paa-a-text{font-size:0.74rem;color:var(--muted);flex:1;line-height:1.4;}
+</style>
+</head>
+<body>
+<header>
+  <h1>// keyword research</h1>
+  <p>Google · Bing · YouTube · PAA · Related · Reddit · Quora · Local Pack</p>
+</header>
+
+<!-- SEARCH CARD -->
+<div class="card">
+  <div class="card-title"><span>🔍 Search</span><button class="collapsible-btn" onclick="toggleCard('search-body',this)">▾</button></div>
+  <div class="collapsible-body" id="search-body">
+    <div class="input-row">
+      <input type="text" id="seed-input" placeholder="Seed keyword — press Enter or comma to add bulk seeds" style="flex:1"/>
+      <button class="btn-primary" id="start-btn" onclick="startAll()">Search</button>
+      <button class="btn-stop" id="stop-btn" onclick="stopAll()" style="display:none">Stop</button>
+    </div>
+    <div class="bulk-hint">💡 Press comma or Enter to queue multiple seeds for bulk research</div>
+    <div id="bulk-tags" style="margin-top:6px;min-height:4px;"></div>
+    <div class="input-2col">
+      <div class="field-wrap">
+        <label class="field-label">Location (city / region)</label>
+        <input type="text" id="location-input" placeholder="e.g. Los Angeles, CA"/>
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Country / Language</label>
+        <select id="country-select">
+          <option value="us">🇺🇸 United States (EN)</option>
+          <option value="gb">🇬🇧 United Kingdom (EN)</option>
+          <option value="au">🇦🇺 Australia (EN)</option>
+          <option value="ca">🇨🇦 Canada (EN)</option>
+          <option value="ie">🇮🇪 Ireland (EN)</option>
+          <option value="de">🇩🇪 Germany (DE)</option>
+          <option value="fr">🇫🇷 France (FR)</option>
+          <option value="es">🇪🇸 Spain (ES)</option>
+          <option value="mx">🇲🇽 Mexico (ES)</option>
+          <option value="it">🇮🇹 Italy (IT)</option>
+          <option value="nl">🇳🇱 Netherlands (NL)</option>
+          <option value="br">🇧🇷 Brazil (PT)</option>
+          <option value="in">🇮🇳 India (HI)</option>
+          <option value="jp">🇯🇵 Japan (JA)</option>
+          <option value="ae">🇦🇪 UAE (AR)</option>
+        </select>
+      </div>
+    </div>
+    <div class="section-label">Keyword Filters</div>
+    <div class="input-3col">
+      <div class="field-wrap"><label class="field-label">Min words</label><input type="number" id="filter-min-words" placeholder="0" min="0" max="20" style="text-align:center"/></div>
+      <div class="field-wrap"><label class="field-label">Max words</label><input type="number" id="filter-max-words" placeholder="0" min="0" max="20" style="text-align:center"/></div>
+      <div class="field-wrap"><label class="field-label">Exclude words</label><input type="text" id="filter-exclude" placeholder="free, cheap, ..."/></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULES CARD -->
+<div class="card">
+  <div class="card-title"><span>⚙️ Modules</span><button class="collapsible-btn" onclick="toggleCard('modules-body',this)">▾</button></div>
+  <div class="collapsible-body" id="modules-body">
+    <div class="section-label" style="margin-top:0;">Autocomplete</div>
+    <div class="modules-grid">
+      <div class="module-card ac active" onclick="toggleModule('ac')" id="mod-ac"><div class="module-dot"></div><div><div class="module-name">Google</div><div class="module-desc">Autocomplete</div></div></div>
+      <div class="module-card bing active" onclick="toggleModule('bing')" id="mod-bing"><div class="module-dot"></div><div><div class="module-name">Bing</div><div class="module-desc">Autocomplete</div></div></div>
+      <div class="module-card youtube active" onclick="toggleModule('youtube')" id="mod-youtube"><div class="module-dot"></div><div><div class="module-name">▶ YouTube</div><div class="module-desc">Autocomplete</div></div></div>
+    </div>
+    <div class="mode-row">
+      <div class="section-label" style="margin-top:0;">Expansion Mode</div>
+      <div class="mode-btns">
+        <label class="mode-btn active-mode" id="mode-alpha"><input type="radio" name="ac-mode" value="alpha" checked style="display:none"/> A–Z</label>
+        <label class="mode-btn" id="mode-numeric"><input type="radio" name="ac-mode" value="numeric" style="display:none"/> 0–9</label>
+        <label class="mode-btn" id="mode-both"><input type="radio" name="ac-mode" value="both" style="display:none"/> A–Z + 0–9</label>
+        <label class="mode-btn" id="mode-modifiers"><input type="radio" name="ac-mode" value="modifiers" style="display:none"/> Modifiers only</label>
+        <label class="mode-btn" id="mode-modifiers_alpha"><input type="radio" name="ac-mode" value="modifiers_alpha" style="display:none"/> Modifiers + A–Z</label>
+      </div>
+      <div id="modifier-ui" style="display:none;margin-top:10px;">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button class="modifier-view-btn active" id="mvbtn-chips" onclick="setModifierView('chips')">🎛 Chips</button>
+          <button class="modifier-view-btn" id="mvbtn-text" onclick="setModifierView('text')">✏️ Edit List</button>
+        </div>
+        <div id="modifier-chips-view">
+          <div class="chip-group-label">FAQ / Questions</div><div class="chip-group" id="chips-faq"></div>
+          <div class="chip-group-label" style="margin-top:7px;">Intent</div><div class="chip-group" id="chips-intent"></div>
+          <div class="chip-group-label" style="margin-top:7px;">Comparison</div><div class="chip-group" id="chips-compare"></div>
+          <div class="chip-group-label" style="margin-top:7px;">Custom</div>
+          <div style="display:flex;gap:5px;margin-top:3px;">
+            <input type="text" id="custom-modifier-input" placeholder="add modifier..." style="flex:1;font-size:0.75rem;padding:6px 9px;"/>
+            <button onclick="addCustomChip()" style="padding:6px 11px;font-size:0.75rem;background:var(--accent2);color:#fff;border-radius:7px;border:none;cursor:pointer;">Add</button>
+          </div>
+          <div class="chip-group" id="chips-custom" style="margin-top:5px;"></div>
+        </div>
+        <div id="modifier-text-view" style="display:none;">
+          <textarea id="modifier-textarea" rows="7" placeholder="One modifier per line..." style="font-size:0.72rem;"></textarea>
+          <div style="display:flex;gap:5px;margin-top:5px;">
+            <button onclick="syncChipsFromText()" style="flex:1;padding:6px;font-size:0.72rem;background:var(--accent2);color:#fff;border-radius:7px;border:none;cursor:pointer;">↑ Apply</button>
+            <button onclick="syncTextFromChips()" style="flex:1;padding:6px;font-size:0.72rem;background:var(--border);color:var(--text);border-radius:7px;border:none;cursor:pointer;">↓ Sync</button>
+          </div>
+        </div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:6px;">Pattern: <span style="color:var(--accent);font-family:'Space Mono',monospace;" id="pattern-preview">how * [keyword]</span></div>
+      </div>
+    </div>
+    <div class="section-label">Google Features</div>
+    <div class="modules-grid">
+      <div class="module-card paa active" onclick="toggleModule('paa')" id="mod-paa"><div class="module-dot"></div><div><div class="module-name">People Also Ask</div><div class="module-desc">Question keywords</div></div></div>
+      <div class="module-card rel active" onclick="toggleModule('rel')" id="mod-rel"><div class="module-dot"></div><div><div class="module-name">Related Searches</div><div class="module-desc">Bottom of results</div></div></div>
+      <div class="module-card pasf active" onclick="toggleModule('pasf')" id="mod-pasf"><div class="module-dot"></div><div><div class="module-name">People Also Search</div><div class="module-desc">Entity suggestions</div></div></div>
+      <div class="module-card local active" onclick="toggleModule('local')" id="mod-local"><div class="module-dot"></div><div><div class="module-name">📍 Local Pack</div><div class="module-desc">Top 3 businesses</div></div></div>
+    </div>
+    <div class="section-label">Community</div>
+    <div class="modules-grid">
+      <div class="module-card reddit active" onclick="toggleModule('reddit')" id="mod-reddit"><div class="module-dot"></div><div><div class="module-name">Reddit</div><div class="module-desc">Post titles + subs</div></div></div>
+      <div class="module-card quora active" onclick="toggleModule('quora')" id="mod-quora"><div class="module-dot"></div><div><div class="module-name">Quora</div><div class="module-desc">Question titles</div></div></div>
+    </div>
+    <div class="toggle-row">
+      <label class="toggle-label"><span class="toggle"><input type="checkbox" id="depth-toggle" onchange="toggleDepth()"/><span class="slider"></span></span>Depth 2 (Autocomplete)</label>
+      <span class="depth-note" id="depth-note">⚠ Much slower</span>
+    </div>
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-meta"><span id="progress-text">Starting...</span><span id="progress-pct">0%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+      <div class="current-query" id="current-query"></div>
+      <div class="seed-queue" id="seed-queue"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS CARD -->
+<div class="card" id="results-card" style="display:none">
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+    <div class="stat"><div class="stat-num" id="stat-unique" style="color:var(--success)">0</div><div class="stat-label">Unique</div></div>
+    <div class="stat"><div class="stat-num" id="stat-dupes" style="color:var(--accent2)">0</div><div class="stat-label">Cross-dupes</div></div>
+    <div class="stat"><div class="stat-num" id="stat-biz" style="color:var(--local)">0</div><div class="stat-label">Businesses</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active-all" id="tab-all" onclick="showTab('all',this)">All <span class="cnt" id="count-all">0</span></button>
+    <button class="tab" id="tab-ac" onclick="showTab('ac',this)">Google <span class="cnt" id="count-ac">0</span></button>
+    <button class="tab" id="tab-bing" onclick="showTab('bing',this)">Bing <span class="cnt" id="count-bing">0</span></button>
+    <button class="tab" id="tab-youtube" onclick="showTab('youtube',this)">▶ YT <span class="cnt" id="count-youtube">0</span></button>
+    <button class="tab" id="tab-paa" onclick="showTab('paa',this)">Also Ask <span class="cnt" id="count-paa">0</span></button>
+    <button class="tab" id="tab-rel" onclick="showTab('rel',this)">Related <span class="cnt" id="count-rel">0</span></button>
+    <button class="tab" id="tab-pasf" onclick="showTab('pasf',this)">Also Search <span class="cnt" id="count-pasf">0</span></button>
+    <button class="tab" id="tab-reddit" onclick="showTab('reddit',this)">Reddit <span class="cnt" id="count-reddit">0</span></button>
+    <button class="tab" id="tab-quora" onclick="showTab('quora',this)">Quora <span class="cnt" id="count-quora">0</span></button>
+    <button class="tab" id="tab-local" onclick="showTab('local',this)">📍 Local <span class="cnt" id="count-local">0</span></button>
+    <button class="tab" id="tab-freq" onclick="showTab('freq',this)">📊 Words</button>
+    <button class="tab" id="tab-serp" onclick="showTab('serp',this)">🔗 SERP URLs</button>
+    <button class="tab" id="tab-pagekw" onclick="showTab('pagekw',this)">🌐 Page KW</button>
+  </div>
+  <div class="results-toolbar" id="results-toolbar">
+    <input type="text" id="kw-search" placeholder="Filter results..." oninput="filterResults()"/>
+    <button class="sort-btn active" id="sort-default" onclick="setSortMode('default',this)">Default</button>
+    <button class="sort-btn" id="sort-alpha" onclick="setSortMode('alpha',this)">A–Z</button>
+    <button class="sort-btn" id="sort-len" onclick="setSortMode('len',this)">Length</button>
+  </div>
+  <div class="results-panel active" id="panel-all"><ul class="results-list" id="list-all"><li style="opacity:1"><div class="empty-state"><div class="icon">🔍</div>Results will stream in here</div></li></ul></div>
+  <div class="results-panel" id="panel-ac"><ul class="results-list" id="list-ac"></ul></div>
+  <div class="results-panel" id="panel-bing"><ul class="results-list" id="list-bing"></ul></div>
+  <div class="results-panel" id="panel-youtube"><ul class="results-list" id="list-youtube"></ul></div>
+  <div class="results-panel" id="panel-paa"><ul class="results-list" id="list-paa"></ul></div>
+  <div class="results-panel" id="panel-rel"><ul class="results-list" id="list-rel"></ul></div>
+  <div class="results-panel" id="panel-pasf"><ul class="results-list" id="list-pasf"></ul></div>
+  <div class="results-panel" id="panel-reddit"><ul class="results-list" id="list-reddit"></ul></div>
+  <div class="results-panel" id="panel-quora"><ul class="results-list" id="list-quora"></ul></div>
+  <div class="results-panel" id="panel-local"><div id="biz-list"><div class="empty-state"><div class="icon">📍</div>Local listings will appear here</div></div></div>
+  <div class="results-panel" id="panel-freq">
+    <div id="freq-loading" style="display:none;text-align:center;padding:20px;color:var(--muted);font-size:0.8rem;">⏳ Analyzing...</div>
+    <div class="freq-grid" id="freq-grid"></div>
+  </div>
+  <div class="results-panel" id="panel-serp">
+    <div id="serp-controls" style="margin-bottom:10px;">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+        <div style="font-size:0.72rem;color:var(--muted);">Engine:</div>
+        <label class="mode-btn active-mode" id="serp-both"><input type="radio" name="serp-eng" value="both" checked style="display:none"/> Both</label>
+        <label class="mode-btn" id="serp-google"><input type="radio" name="serp-eng" value="google" style="display:none"/> Google only</label>
+        <label class="mode-btn" id="serp-bing"><input type="radio" name="serp-eng" value="bing" style="display:none"/> Bing only</label>
+        <div style="font-size:0.72rem;color:var(--muted);margin-left:6px;">Source:</div>
+        <label class="mode-btn active-mode" id="serp-src-ac"><input type="radio" name="serp-src" value="ac" checked style="display:none"/> Google AC</label>
+        <label class="mode-btn" id="serp-src-bing"><input type="radio" name="serp-src" value="bing" style="display:none"/> Bing AC</label>
+        <label class="mode-btn" id="serp-src-all"><input type="radio" name="serp-src" value="all" style="display:none"/> All keywords</label>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:8px;align-items:center;">
+        <div style="flex:1;font-size:0.7rem;color:var(--muted);">Max keywords to look up: <span id="serp-limit-val">25</span></div>
+        <input type="range" id="serp-limit" min="5" max="100" value="25" step="5" oninput="document.getElementById('serp-limit-val').textContent=this.value" style="flex:2;accent-color:var(--accent);"/>
+      </div>
+      <button class="btn-primary" id="serp-start-btn" onclick="startSerpLookup()" style="margin-top:8px;width:100%;font-size:0.82rem;padding:9px;">🔗 Fetch SERP URLs</button>
+    </div>
+    <div id="serp-progress" style="display:none;margin-bottom:8px;">
+      <div class="progress-meta"><span id="serp-pt">Fetching...</span><span id="serp-pct">0%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="serp-bar"></div></div>
+      <button id="stop-serp-btn" onclick="stopSerpLookup()" style="display:none;margin-top:5px;font-size:0.7rem;background:var(--danger);color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;">Stop</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+      <input type="text" id="serp-filter" placeholder="Filter keywords or URLs..." oninput="filterSerp()" style="flex:1;font-size:0.78rem;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);outline:none;"/>
+      <span id="serp-count" style="font-size:0.7rem;color:var(--muted);font-family:'Space Mono',monospace;"></span>
+    </div>
+    <div id="serp-list" style="max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+      <div class="empty-state"><div class="icon">🔗</div>Click "Fetch SERP URLs" to look up top 10 results for your keywords</div>
+    </div>
+  </div>
+
+  <!-- PAGE KEYWORDS PANEL -->
+  <div class="results-panel" id="panel-pagekw">
+    <div id="pagekw-controls" style="margin-bottom:10px;">
+      <div style="font-size:0.78rem;color:var(--text);margin-bottom:7px;line-height:1.5;">
+        Visits each URL from your SERP results and extracts keyword phrases from titles, headings, meta tags, and body text. <span style="color:var(--success);">Green = new keywords</span> not in your existing list.
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:7px;">
+        <div style="font-size:0.72rem;color:var(--muted);">URL source:</div>
+        <label class="mode-btn active-mode" id="pkw-src-both"><input type="radio" name="pkw-src" value="both" checked style="display:none"/> Both engines</label>
+        <label class="mode-btn" id="pkw-src-google"><input type="radio" name="pkw-src" value="google" style="display:none"/> Google only</label>
+        <label class="mode-btn" id="pkw-src-bing"><input type="radio" name="pkw-src" value="bing" style="display:none"/> Bing only</label>
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:8px;align-items:center;">
+        <div style="flex:1;font-size:0.7rem;color:var(--muted);">Max URLs to visit: <span id="pkw-limit-val">20</span></div>
+        <input type="range" id="pkw-limit" min="1" max="50" value="20" step="1" oninput="document.getElementById('pkw-limit-val').textContent=this.value" style="flex:2;accent-color:var(--accent2);"/>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-primary" id="pagekw-start-btn" onclick="startPageKw()" style="flex:1;font-size:0.82rem;padding:9px;background:linear-gradient(135deg,var(--accent2),var(--pasf));" disabled title="Fetch SERP URLs first">🌐 Extract Page Keywords</button>
+        <button onclick="stopPageKw()" id="pagekw-stop-btn" style="display:none;padding:9px 12px;font-size:0.82rem;background:var(--danger);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Stop</button>
+      </div>
+    </div>
+    <div id="pagekw-progress" style="display:none;margin-bottom:8px;">
+      <div class="progress-meta"><span id="pkw-pt">Visiting pages...</span><span id="pkw-pct">0%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="pkw-bar" style="background:linear-gradient(90deg,var(--accent2),var(--pasf));"></div></div>
+      <div class="current-query" id="pkw-url"></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+      <input type="text" id="pagekw-filter" placeholder="Filter keywords, domains, zones..." oninput="filterPageKw()" style="flex:1;font-size:0.78rem;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);outline:none;"/>
+      <div style="display:flex;gap:4px;">
+        <button class="sort-btn active" id="pkw-sort-score" onclick="sortPageKw('score',this)">Score</button>
+        <button class="sort-btn" id="pkw-sort-alpha" onclick="sortPageKw('alpha',this)">A–Z</button>
+        <button class="sort-btn" id="pkw-sort-new" onclick="sortPageKw('new',this)">New first</button>
+      </div>
+      <span id="pagekw-count" style="font-size:0.7rem;color:var(--muted);font-family:'Space Mono',monospace;white-space:nowrap;"></span>
+    </div>
+    <div id="pagekw-list" style="max-height:340px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;">
+      <div class="empty-state"><div class="icon">🌐</div>Fetch SERP URLs first, then click "Extract Page Keywords"</div>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOADS CARD -->
+<div class="card" id="downloads-card" style="display:none">
+  <div class="card-title"><span>⬇ Downloads</span><button class="collapsible-btn" onclick="toggleCard('dl-body',this)">▾</button></div>
+  <div class="collapsible-body" id="dl-body">
+    <div class="section-label" style="margin-top:0;">Per module (.txt)</div>
+    <div class="dl-grid">
+      <button class="btn-dl ac"      id="dl-ac"      onclick="downloadTxt('ac')"     disabled>Google AC</button>
+      <button class="btn-dl bing"    id="dl-bing"    onclick="downloadTxt('bing')"   disabled>Bing AC</button>
+      <button class="btn-dl youtube" id="dl-youtube" onclick="downloadTxt('youtube')" disabled>YouTube</button>
+      <button class="btn-dl paa"     id="dl-paa"     onclick="downloadTxt('paa')"    disabled>Also Ask</button>
+      <button class="btn-dl rel"     id="dl-rel"     onclick="downloadTxt('rel')"    disabled>Related</button>
+      <button class="btn-dl pasf"    id="dl-pasf"    onclick="downloadTxt('pasf')"   disabled>Also Search</button>
+      <button class="btn-dl reddit"  id="dl-reddit"  onclick="downloadTxt('reddit')" disabled>Reddit</button>
+      <button class="btn-dl quora"   id="dl-quora"   onclick="downloadTxt('quora')"  disabled>Quora</button>
+    </div>
+    <div class="section-label">All modules (.xlsx)</div>
+    <button class="btn-xlsx" id="dl-xlsx" onclick="downloadXlsx()" disabled>📊 Download Excel File</button>
+    <div class="xlsx-note">15 sheets: All Keywords · Word Frequency · Google · Bing · YouTube · Also Ask · Related · Also Search · Reddit · Quora · Local Pack · Google SERP URLs · Bing SERP URLs · Page Keywords · Schema PAA</div>
+  </div>
+</div>
+
+<!-- HISTORY CARD -->
+<div class="card">
+  <div class="card-title">
+    <span>🕒 History</span>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn-ghost" onclick="clearHistory()" style="font-size:0.68rem;padding:3px 8px;color:var(--muted);">Clear all</button>
+      <button class="collapsible-btn" onclick="toggleCard('history-body',this)">▾</button>
+    </div>
+  </div>
+  <div class="collapsible-body" id="history-body">
+    <div id="history-list"><div class="empty-state" style="padding:14px;"><div class="icon">🕒</div>Previous searches will appear here</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const KW_MODULES=['ac','bing','youtube','paa','rel','pasf','reddit','quora'];
+const modules={ac:[],bing:[],youtube:[],paa:[],rel:[],pasf:[],reddit:[],quora:[]};
+const seen={ac:new Set(),bing:new Set(),youtube:new Set(),paa:new Set(),rel:new Set(),pasf:new Set(),reddit:new Set(),quora:new Set()};
+const seenAll=new Set();
+const sources={ac:null,bing:null,youtube:null,paa:null,rel:null,pasf:null,local:null,reddit:null,quora:null};
+const active={ac:true,bing:true,youtube:true,paa:true,rel:true,pasf:true,local:true,reddit:true,quora:true};
+const done={ac:false,bing:false,youtube:false,paa:false,rel:false,pasf:false,local:false,reddit:false,quora:false};
+const moduleFiles={ac:'google-autocomplete',bing:'bing-autocomplete',youtube:'youtube-autocomplete',paa:'people-also-ask',rel:'related-searches',pasf:'people-also-search',reddit:'reddit',quora:'quora'};
+let crossDupes=0,seedValue='',currentTab='all',localBusinesses=[],sortMode='default';
+let bulkSeeds=[],bulkQueue=[];
+
+// ── Card collapse ────────────────────────────────────────────────────────────
+function toggleCard(id,btn){
+  const body=document.getElementById(id);
+  const open=body.style.maxHeight!=='0px'&&body.style.maxHeight!=='';
+  // Fix T: use large fixed value instead of scrollHeight+800 — content can grow after open
+  body.style.maxHeight=open?'0px':'9999px';
+  btn.closest('.card').classList.toggle('collapsed',open);
+}
+
+// ── Bulk seeds ───────────────────────────────────────────────────────────────
+document.getElementById('seed-input').addEventListener('keydown',e=>{
+  if(e.key===',' ){e.preventDefault();const v=e.target.value.trim().replace(/,$/,'');if(v){addBulkSeed(v);e.target.value='';}}
+  else if(e.key==='Enter'){e.preventDefault();const v=e.target.value.trim();if(v&&bulkSeeds.length>0){addBulkSeed(v);e.target.value='';startAll();}else if(v){startAll();}}
+});
+function addBulkSeed(seed){if(!seed||bulkSeeds.includes(seed))return;bulkSeeds.push(seed);renderBulkTags();}
+function removeBulkSeed(seed){bulkSeeds=bulkSeeds.filter(s=>s!==seed);renderBulkTags();}
+function renderBulkTags(){
+  const c=document.getElementById('bulk-tags');
+  // Fix K: use data-seed attribute + delegated listener, never inline JS string interpolation
+  c.innerHTML=bulkSeeds.map(s=>`<span class="bulk-tag">${escHtml(s)}<button class="bulk-remove" data-seed="${escHtml(s)}" title="Remove">×</button></span>`).join('');
+  c.querySelectorAll('.bulk-remove').forEach(btn=>btn.addEventListener('click',()=>removeBulkSeed(btn.dataset.seed)));
+}
+
+// ── Module toggles ───────────────────────────────────────────────────────────
+function toggleModule(id){active[id]=!active[id];document.getElementById('mod-'+id).classList.toggle('active',active[id]);}
+function toggleDepth(){document.getElementById('depth-note').classList.toggle('visible',document.getElementById('depth-toggle').checked);}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function showTab(id,el){
+  currentTab=id;
+  document.querySelectorAll('.results-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.className='tab');
+  el.className='tab active-'+id;
+  document.getElementById('results-toolbar').style.display=(id==='local'||id==='freq'||id==='serp'||id==='pagekw')?'none':'flex';
+  document.getElementById('kw-search').value='';
+  filterResults();
+  if(id==='freq') loadWordFreq();
+}
+
+// ── Sort & filter ────────────────────────────────────────────────────────────
+function setSortMode(mode,btn){
+  sortMode=mode;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(currentTab!=='all'&&currentTab!=='local'&&currentTab!=='freq') resortList('list-'+currentTab);
+}
+function resortList(listId){
+  const ul=document.getElementById(listId); if(!ul) return;
+  const items=[...ul.querySelectorAll('li:not(.empty-state-li)')];
+  if(sortMode==='alpha') items.sort((a,b)=>(a.querySelector('.kw-text')||a).textContent.localeCompare((b.querySelector('.kw-text')||b).textContent));
+  else if(sortMode==='len') items.sort((a,b)=>(a.querySelector('.kw-text')||a).textContent.length-(b.querySelector('.kw-text')||b).textContent.length);
+  items.forEach(li=>ul.appendChild(li));
+}
+function filterResults(){
+  const q=document.getElementById('kw-search').value.trim().toLowerCase();
+  const listId='list-'+(currentTab==='all'?'all':currentTab);
+  const ul=document.getElementById(listId); if(!ul) return;
+  ul.querySelectorAll('li').forEach(li=>{
+    const t=li.querySelector('.kw-text');
+    if(!t) return;
+    li.classList.toggle('hidden',!!q&&!t.textContent.toLowerCase().includes(q));
+  });
+}
+
+// ── Word frequency ───────────────────────────────────────────────────────────
+let freqLoaded=false;
+async function loadWordFreq(){
+  if(freqLoaded) return; freqLoaded=true;
+  const grid=document.getElementById('freq-grid');
+  const loading=document.getElementById('freq-loading');
+  loading.style.display='block';
+  try{
+    const r=await fetch('/analyze/wordfreq',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modules:Object.fromEntries(KW_MODULES.map(m=>[m,modules[m]]))})});
+    const data=await r.json();
+    loading.style.display='none';
+    const maxCount=data.freq[0]?data.freq[0][1]:1;
+    data.freq.forEach(([word,count])=>{
+      const item=document.createElement('div'); item.className='freq-item';
+      const pct=Math.round((count/maxCount)*100);
+      item.innerHTML=`<div><div class="freq-word">${word}</div><div class="freq-bar-wrap"><div class="freq-bar" style="width:${pct}%"></div></div></div><span class="freq-count">${count}</span>`;
+      grid.appendChild(item);
+    });
+  } catch(e){ loading.textContent='Could not analyze word frequency.'; }
+}
+
+// ── Start all ────────────────────────────────────────────────────────────────
+function startAll(){
+  const inputSeed=document.getElementById('seed-input').value.trim();
+  let seeds=[...bulkSeeds];
+  if(inputSeed&&!seeds.includes(inputSeed)) seeds=[inputSeed,...seeds];
+  if(!seeds.length){alert('Enter a seed keyword');return;}
+
+  crossDupes=0; localBusinesses=[]; seenAll.clear(); freqLoaded=false;
+  // Fix 2: abort any in-progress SERP fetch before wiping serpData
+  if(serpAbortCtrl){serpAbortCtrl.abort();serpAbortCtrl=null;
+    document.getElementById('serp-start-btn').disabled=false;
+    document.getElementById('stop-serp-btn').style.display='none';
+    document.getElementById('serp-progress').style.display='none';}
+  serpData={google:[],bing:[]};
+  pageKwData=[]; pageKwAbort=false;
+  // Fix B: re-disable Extract Page Keywords — SERP data has been wiped
+  document.getElementById('pagekw-start-btn').disabled=true;
+  document.getElementById('serp-list').innerHTML='<div class="empty-state"><div class="icon">🔗</div>Click "Fetch SERP URLs" to look up top 10 results for your keywords</div>';
+  document.getElementById('serp-count').textContent='';
+  document.getElementById('pagekw-list').innerHTML='<div class="empty-state"><div class="icon">🌐</div>Fetch SERP URLs first, then click "Extract Page Keywords"</div>';
+  document.getElementById('pagekw-count').textContent='';
+  KW_MODULES.forEach(m=>{
+    modules[m]=[]; seen[m]=new Set();
+    document.getElementById('list-'+m).innerHTML='';
+    document.getElementById('count-'+m).textContent='0';
+    document.getElementById('dl-'+m).disabled=true;
+  });
+  document.getElementById('list-all').innerHTML='';
+  document.getElementById('count-all').textContent='0';
+  document.getElementById('freq-grid').innerHTML='';
+  document.getElementById('biz-list').innerHTML='<div class="empty-state"><div class="icon">📍</div>Searching...</div>';
+  document.getElementById('count-local').textContent='0';
+  document.getElementById('dl-xlsx').disabled=true;
+  document.getElementById('results-card').style.display='block';
+  document.getElementById('downloads-card').style.display='block';
+  document.getElementById('progress-wrap').classList.add('visible');
+  document.getElementById('start-btn').disabled=true;
+  document.getElementById('stop-btn').style.display='inline-block';
+  ['stat-total','stat-unique','stat-dupes','stat-biz'].forEach(id=>document.getElementById(id).textContent='0');
+  showTab('all',document.getElementById('tab-all'));
+
+  bulkQueue=[...seeds];
+  runNextSeed();
+}
+
+function runNextSeed(){
+  if(!bulkQueue.length){finish();return;}
+  seedValue=bulkQueue.shift();
+  document.getElementById('seed-queue').textContent=bulkQueue.length?`Queued: ${bulkQueue.join(', ')}`:'';
+  Object.keys(done).forEach(m=>done[m]=false);
+
+  const depth=document.getElementById('depth-toggle').checked?2:1;
+  const mode=document.querySelector('input[name="ac-mode"]:checked').value;
+  const modParam=encodeURIComponent(getModifierParam());
+  const loc=encodeURIComponent(document.getElementById('location-input').value.trim());
+  const gl=document.getElementById('country-select').value;
+  const minW=document.getElementById('filter-min-words').value||0;
+  const maxW=document.getElementById('filter-max-words').value||0;
+  const excl=encodeURIComponent(document.getElementById('filter-exclude').value.trim());
+  const base=`seed=${enc(seedValue)}&location=${loc}&gl=${gl}&min_words=${minW}&max_words=${maxW}&exclude=${excl}`;
+  const acP=`${base}&depth=${depth}&mode=${mode}&modifiers=${modParam}`;
+
+  if(active.ac)     startKwModule('ac',     `/research/autocomplete?${acP}`);
+  if(active.bing)   startKwModule('bing',   `/research/bing?${acP}`);
+  if(active.youtube)startKwModule('youtube',`/research/youtube?${acP}`);
+  if(active.paa)    startKwModule('paa',    `/research/paa?${base}`);
+  if(active.rel)    startKwModule('rel',    `/research/related?${base}`);
+  if(active.pasf)   startKwModule('pasf',   `/research/pasf?${base}`);
+  if(active.reddit) startKwModule('reddit', `/research/reddit?${base}`);
+  if(active.quora)  startKwModule('quora',  `/research/quora?${base}`);
+  if(active.local)  startLocalModule(loc,gl);
+
+  Object.keys(done).forEach(m=>{if(!active[m])done[m]=true;});
+  if(Object.values(done).every(Boolean))seedDone();
+}
+
+function seedDone(){
+  saveHistory(seedValue,Object.values(modules).reduce((s,a)=>s+a.length,0));
+  if(bulkQueue.length) runNextSeed();
+  else finish();
+}
+
+function startKwModule(id,url){
+  const es=new EventSource(url); sources[id]=es;
+  es.onmessage=(e)=>{
+    const data=JSON.parse(e.data);
+    if(data.done){done[id]=true;es.close();sources[id]=null;document.getElementById('dl-'+id).disabled=modules[id].length===0;if(Object.values(done).every(Boolean))seedDone();return;}
+    if(data.progress){
+      const pct=Math.round((data.index/data.of)*100);
+      document.getElementById('progress-bar').style.width=pct+'%';
+      document.getElementById('progress-pct').textContent=pct+'%';
+      document.getElementById('progress-text').textContent='['+id.toUpperCase()+'] '+data.query;
+      document.getElementById('current-query').textContent='→ '+data.query;
+      return;
+    }
+    const kw=data.keyword.trim().toLowerCase();
+    if(seen[id].has(kw))return;
+    seen[id].add(kw);modules[id].push(kw);
+    document.getElementById('count-'+id).textContent=modules[id].length;
+    document.getElementById('stat-total').textContent=Object.values(modules).reduce((s,a)=>s+a.length,0);
+    if(seenAll.has(kw)){crossDupes++;document.getElementById('stat-dupes').textContent=crossDupes;}
+    else{seenAll.add(kw);addToList(id,kw,data.depth,data.source,data.type);document.getElementById('count-all').textContent=seenAll.size;document.getElementById('stat-unique').textContent=seenAll.size;}
+  };
+  es.onerror=()=>{done[id]=true;es.close();sources[id]=null;document.getElementById('dl-'+id).disabled=modules[id].length===0;if(Object.values(done).every(Boolean))seedDone();};
+}
+
+function startLocalModule(loc,gl){
+  const es=new EventSource(`/research/local?seed=${enc(seedValue)}&location=${loc}&gl=${gl}`);
+  sources.local=es;
+  es.onmessage=(e)=>{
+    const data=JSON.parse(e.data);
+    if(data.done){done.local=true;es.close();sources.local=null;if(localBusinesses.length===0)document.getElementById('biz-list').innerHTML='<div class="empty-state"><div class="icon">📍</div>No listings found. Add a city name.</div>';if(Object.values(done).every(Boolean))seedDone();return;}
+    if(data.business){const biz={...data.business,query:seedValue};localBusinesses.push(biz);addBizCard(biz);document.getElementById('count-local').textContent=localBusinesses.length;document.getElementById('stat-biz').textContent=localBusinesses.length;}
+  };
+  es.onerror=()=>{done.local=true;es.close();sources.local=null;if(Object.values(done).every(Boolean))seedDone();};
+}
+
+function stopAll(){Object.keys(sources).forEach(m=>{if(sources[m]){sources[m].close();sources[m]=null;}done[m]=true;});bulkQueue=[];finish();}
+
+function finish(){
+  document.getElementById('start-btn').disabled=false;
+  document.getElementById('stop-btn').style.display='none';
+  document.getElementById('progress-bar').style.width='100%';
+  document.getElementById('progress-pct').textContent='Done';
+  document.getElementById('progress-text').textContent=`Complete — ${seenAll.size} unique keywords`;
+  document.getElementById('current-query').textContent='';
+  document.getElementById('seed-queue').textContent='';
+  KW_MODULES.forEach(m=>document.getElementById('dl-'+m).disabled=modules[m].length===0);
+  document.getElementById('dl-xlsx').disabled=(seenAll.size===0&&localBusinesses.length===0);
+  showToast(`✓ Done — ${seenAll.size} unique keywords, ${crossDupes} cross-dupes removed`);
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function addToList(id,kw,depth,source,type){
+  const ul=document.getElementById('list-'+id);
+  const empty=ul.querySelector('.empty-state');if(empty)empty.closest('li').remove();
+  ul.appendChild(buildLi(kw,depth,source,type,id,false));
+  if(id===currentTab)ul.scrollTop=ul.scrollHeight;
+
+  const allUl=document.getElementById('list-all');
+  const allEmpty=allUl.querySelector('.empty-state');if(allEmpty)allEmpty.closest('li').remove();
+  allUl.appendChild(buildLi(kw,depth,source,type,id,true));
+  if(currentTab==='all')allUl.scrollTop=allUl.scrollHeight;
+}
+
+function buildLi(kw,depth,source,type,id,showMod){
+  const li=document.createElement('li');
+  const colors={ac:'var(--accent)',bing:'var(--bing)',youtube:'var(--youtube)',paa:'var(--paa)',rel:'var(--rel)',pasf:'var(--pasf)',reddit:'var(--reddit)',quora:'var(--quora)'};
+  let badge='';
+  if(showMod) badge=`<span class="kw-badge" style="color:${colors[id]||'var(--muted)'}">${id}</span>`;
+  else if(source&&(id==='reddit'||id==='quora')) badge=`<span class="kw-badge ${id}">${escHtml(source)}</span>`;
+  else if(depth>1) badge=`<span class="kw-badge">d${depth}</span>`;
+  // Fix 14: click to copy keyword text
+  li.title='Click to copy';
+  li.style.cursor='pointer';
+  li.onclick=()=>copyText(kw,li);
+  li.innerHTML=`<span class="kw-text">${escHtml(kw)}</span>${badge}`;
+  return li;
+}
+
+function copyText(text, el){
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast(`✓ Copied: ${text}`);
+    if(el){ el.style.background='rgba(16,185,129,0.15)'; setTimeout(()=>el.style.background='',700); }
+  }).catch(()=>showToast('Copy failed',true));
+}
+
+function addBizCard(biz){
+  const c=document.getElementById('biz-list');
+  const empty=c.querySelector('.empty-state');if(empty)empty.remove();
+  const card=document.createElement('div');card.className='biz-card';
+  const rating=biz.rating?`<span class="biz-pill rating">⭐ ${biz.rating}${biz.reviews?' ('+biz.reviews+')':''}</span>`:'';
+  const phone=biz.phone?`<span class="biz-pill">📞 ${biz.phone}</span>`:'';
+  const addr=biz.address?`<div class="biz-address">📍 ${escHtml(biz.address)}</div>`:'';
+  card.innerHTML=`<div class="biz-name">${escHtml(biz.name)}</div><div class="biz-meta">${rating}${phone}</div>${addr}<div style="font-size:0.6rem;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace">Query: ${escHtml(biz.query)}</div>`;
+  c.appendChild(card);
+}
+
+// ── Downloads ────────────────────────────────────────────────────────────────
+function downloadTxt(id){
+  const lines=dedup(modules[id]);
+  triggerDownload(lines.join('\n'),'text/plain',slugify(seedValue)+'-'+moduleFiles[id]+'.txt');
+  showToast(`✓ ${lines.length} keywords downloaded`);
+}
+
+async function downloadXlsx(){
+  const btn=document.getElementById('dl-xlsx');
+  btn.disabled=true;btn.textContent='⏳ Generating...';
+  try{
+    let wordfreq=[];
+    try{const fr=await fetch('/analyze/wordfreq',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modules:Object.fromEntries(KW_MODULES.map(m=>[m,modules[m]]))})});const fd=await fr.json();wordfreq=fd.freq||[];}catch(e){}
+    const resp=await fetch('/export/xlsx',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({seed:seedValue,ac:dedup(modules.ac),bing:dedup(modules.bing),youtube:dedup(modules.youtube),paa:dedup(modules.paa),rel:dedup(modules.rel),pasf:dedup(modules.pasf),reddit:dedup(modules.reddit),quora:dedup(modules.quora),local:localBusinesses,wordfreq,serp_google:serpData.google,serp_bing:serpData.bing,page_keywords:pageKwData.filter(k=>!k._paa),schema_paa:pageKwData.filter(k=>k._paa)})});
+    if(!resp.ok){const err=await resp.json();showToast('Error: '+err.error,true);return;}
+    const blob=await resp.blob();const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=slugify(seedValue)+'-keyword-research.xlsx';a.click();
+    URL.revokeObjectURL(url);
+    showToast(`✓ Excel downloaded — ${seenAll.size} unique keywords`);
+  }catch(e){showToast('Download failed: '+e.message,true);}
+  finally{btn.disabled=false;btn.textContent='📊 Download Excel File';}
+}
+
+// ── History ──────────────────────────────────────────────────────────────────
+function saveHistory(seed,count){
+  const h=JSON.parse(localStorage.getItem('kw_history')||'[]');
+  const entry={seed,count,date:new Date().toLocaleDateString(),ts:Date.now()};
+  const filtered=h.filter(x=>x.seed!==seed);filtered.unshift(entry);
+  localStorage.setItem('kw_history',JSON.stringify(filtered.slice(0,20)));
+  renderHistory();
+}
+function renderHistory(){
+  const h=JSON.parse(localStorage.getItem('kw_history')||'[]');
+  const c=document.getElementById('history-list');
+  if(!h.length){c.innerHTML='<div class="empty-state" style="padding:14px;"><div class="icon">🕒</div>No searches yet</div>';return;}
+  // Fix K: use data attributes for seed values — safe for seeds containing apostrophes
+  c.innerHTML=h.map(x=>`<div class="history-item" data-seed="${escHtml(x.seed)}"><span>🔍</span><div style="flex:1"><div class="history-seed">${escHtml(x.seed)}</div><div class="history-meta">${x.count} keywords · ${x.date}</div></div><button class="history-del" data-seed="${escHtml(x.seed)}" title="Delete">✕</button></div>`).join('');
+  c.querySelectorAll('.history-item').forEach(el=>{
+    el.addEventListener('click',e=>{if(!e.target.closest('.history-del'))loadFromHistory(el.dataset.seed);});
+  });
+  c.querySelectorAll('.history-del').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();deleteHistory(btn.dataset.seed);});
+  });
+}
+function loadFromHistory(seed){document.getElementById('seed-input').value=seed;window.scrollTo({top:0,behavior:'smooth'});showToast('Loaded: '+seed);}
+function deleteHistory(seed){const h=JSON.parse(localStorage.getItem('kw_history')||'[]').filter(x=>x.seed!==seed);localStorage.setItem('kw_history',JSON.stringify(h));renderHistory();}
+function clearHistory(){if(confirm('Clear all search history?')){localStorage.removeItem('kw_history');renderHistory();}}
+
+// ── Page keyword extraction ───────────────────────────────────────────────────
+let pageKwData=[];
+let pageKwAbort=false;
+let pkwSortMode='score';
+
+document.querySelectorAll('input[name="pkw-src"]').forEach(r=>r.addEventListener('change',()=>{
+  document.querySelectorAll('[id^="pkw-src"]').forEach(b=>{if(b.tagName==='LABEL')b.classList.remove('active-mode');});
+  r.closest('label').classList.add('active-mode');
+}));
+
+function getPageKwUrls(){
+  const src=document.querySelector('input[name="pkw-src"]:checked').value;
+  const limit=parseInt(document.getElementById('pkw-limit').value)||20;
+  let urls=[];
+  const addUrls=(list)=>list.forEach(e=>e.urls.forEach(u=>{if(!urls.includes(u.url))urls.push(u.url);}));
+  if(src==='both'||src==='google') addUrls(serpData.google);
+  if(src==='both'||src==='bing')   addUrls(serpData.bing);
+  return urls.slice(0,limit);
+}
+
+async function startPageKw(){
+  const urls=getPageKwUrls();
+  if(!urls.length){
+    showToast('No SERP URLs yet — run Fetch SERP URLs first',true);
+    showTab('serp',document.getElementById('tab-serp'));
+    return;
+  }
+
+  pageKwData=[]; pageKwAbort=false;
+  document.getElementById('pagekw-list').innerHTML='';
+  document.getElementById('pagekw-count').textContent='';
+  document.getElementById('pagekw-progress').style.display='block';
+  document.getElementById('pagekw-start-btn').disabled=true;
+  document.getElementById('pagekw-stop-btn').style.display='inline-block';
+
+  // Collect existing keywords for "new" detection
+  const existingKws=[...seenAll];
+
+  try{
+    const resp=await fetch('/research/page_keywords',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        urls,
+        seed:seedValue,
+        existing_keywords:existingKws
+      })
+    });
+    const reader=resp.body.getReader();
+    const decoder=new TextDecoder();
+    let buf='';
+    while(true){
+      if(pageKwAbort) break;
+      const {done,value}=await reader.read();
+      if(done) break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n');
+      buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const raw=line.slice(6).trim();
+        if(!raw) continue;
+        try{
+          const d=JSON.parse(raw);
+          if(d.done){ finishPageKw(); return; }
+          if(d.progress){ handlePageKwProgress(d); continue; }
+          if(d.error){ handlePageKwError(d); continue; }
+          handlePageKwResult(d);
+        }catch(e){}
+      }
+    }
+  }catch(e){showToast('Page crawl error: '+e.message,true);}
+  finishPageKw();
+}
+
+function handlePageKwProgress(d){
+  const pct=Math.round((d.index/d.total)*100);
+  document.getElementById('pkw-bar').style.width=pct+'%';
+  document.getElementById('pkw-pct').textContent=pct+'%';
+  document.getElementById('pkw-pt').textContent=`Visiting ${d.index}/${d.total}...`;
+  document.getElementById('pkw-url').textContent='→ '+d.url;
+}
+
+function handlePageKwError(d){
+  const container=document.getElementById('pagekw-list');
+  const div=document.createElement('div');
+  div.style.cssText='font-size:0.68rem;color:var(--muted);padding:4px 8px;font-family:monospace;';
+  div.textContent=`✗ ${d.url} — ${d.message}`;
+  container.appendChild(div);
+}
+
+function handlePageKwResult(d){
+  const hasKw = d.keywords && d.keywords.length;
+  const hasPaa = d.schema_paa && d.schema_paa.length;
+  if(!hasKw && !hasPaa) return;
+
+  const container=document.getElementById('pagekw-list');
+  const empty=container.querySelector('.empty-state');if(empty)empty.remove();
+
+  // Page separator
+  const sep=document.createElement('div');
+  sep.className='pkw-page-sep';
+  const kwList = d.keywords || [];
+  const newCount=kwList.filter(k=>k.is_new).length;
+  const schemaCount=kwList.filter(k=>(k.zone||'').startsWith('schema:')).length;
+  const paaList = d.schema_paa || [];
+  const paaCount=paaList.length;
+  const paaNote=paaCount?` · <span style="color:var(--paa)">❓ ${paaCount} schema PAA</span>`:'';
+  const schemaNote=schemaCount?` · <span style="color:var(--warn)">⚡ ${schemaCount} from schema</span>`:'';
+  sep.innerHTML=`<span style="flex:1">🌐 <a href="${escHtml(d.url)}" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;">${escHtml(d.domain)}</a>${d.title?` — ${escHtml(d.title.substring(0,55))}`:''}</span><span style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--success);">${newCount} new · ${kwList.length} kw${schemaNote}${paaNote}</span>`;
+  container.appendChild(sep);
+
+  // Schema PAA Q&A section — Fix 6: store in pageKwData once here only, with _paa flag
+  if(paaList.length){
+    const paaWrap=document.createElement('div');
+    paaWrap.className='schema-paa-wrap';
+    paaWrap.innerHTML=`<div class="schema-paa-header">❓ Schema PAA — ${paaList.length} questions from <code>${paaList[0]?.schema_type||'schema'}</code></div>`;
+    paaList.forEach(paa=>{
+      // Fix 6: push to pageKwData exactly once per PAA entry
+      pageKwData.push({keyword:paa.question,score:10,zone:`schema:${paa.schema_type}:question`,source:d.domain,is_new:paa.is_new,url:d.url,_paa:true,answer:paa.answer||'',schema_type:paa.schema_type,source_field:paa.source_field,domain:d.domain});
+
+      const card=document.createElement('div');
+      // Fix 4,5: add sortable/filterable dataset attrs to PAA cards same as pkw-rows
+      card.className='schema-paa-card'+(paa.is_new?' is-new':'');
+      card.dataset.kw=(paa.question||'').toLowerCase();
+      card.dataset.src=(d.domain||'').toLowerCase();
+      card.dataset.zone='schema-paa';
+      card.dataset.score=10;
+      card.dataset.isnew=paa.is_new?'1':'0';
+      card.innerHTML=`
+        <div class="paa-q">
+          <span class="paa-q-icon">Q</span>
+          <span class="paa-q-text">${escHtml(paa.question)}</span>
+          ${paa.is_new?'<span class="pkw-badge-new">NEW</span>':''}
+          <span class="pkw-badge-zone schema" style="margin-left:auto">${escHtml(paa.schema_type||'schema')}</span>
+        </div>
+        ${paa.answer?`<div class="paa-a"><span class="paa-a-icon">A</span><span class="paa-a-text">${escHtml(paa.answer.substring(0,500))}${paa.answer.length>500?'…':''}</span></div>`:''}`;
+      paaWrap.appendChild(card);
+    });
+    container.appendChild(paaWrap);
+  }
+
+  // Keyword phrase rows
+  kwList.forEach(kw=>{
+    pageKwData.push({...kw, url:d.url});
+    const isSchema=(kw.zone||'').startsWith('schema:');
+    const zoneShort=isSchema?(kw.zone.replace('schema:','').split(':').pop()||'schema'):kw.zone;
+    const row=document.createElement('div');
+    row.className='pkw-row'+(kw.is_new?' is-new':'');
+    row.title='Click to copy';
+    row.onclick=()=>copyText(kw.keyword,row);
+    row.dataset.kw=kw.keyword.toLowerCase();
+    row.dataset.src=(kw.source||'').toLowerCase();
+    row.dataset.zone=(kw.zone||'').toLowerCase();
+    row.dataset.score=kw.score||0;
+    row.dataset.isnew=kw.is_new?'1':'0';
+    row.innerHTML=`
+      <span class="pkw-text">${escHtml(kw.keyword)}</span>
+      <span class="pkw-badge-zone${isSchema?' schema':''}" title="${escHtml(kw.zone||'')}">${escHtml(zoneShort)}</span>
+      <span class="pkw-badge-src">${escHtml(kw.source||'')}</span>
+      ${kw.is_new?'<span class="pkw-badge-new">NEW</span>':''}
+      <span class="pkw-score">${kw.score}</span>`;
+    container.appendChild(row);
+  });
+
+  container.scrollTop=container.scrollHeight;
+
+  const newTotal=pageKwData.filter(k=>k.is_new).length;
+  document.getElementById('pagekw-count').textContent=`${pageKwData.length} phrases · ${newTotal} new`;
+}
+
+function finishPageKw(){
+  document.getElementById('pagekw-progress').style.display='none';
+  // Fix 3: only re-enable if SERP data still exists — a new Search wipes it
+  const hasSerpUrls=(serpData.google.length+serpData.bing.length)>0;
+  document.getElementById('pagekw-start-btn').disabled=!hasSerpUrls;
+  document.getElementById('pagekw-stop-btn').style.display='none';
+  const newCount=pageKwData.filter(k=>k.is_new).length;
+  showToast(`✓ Page crawl done — ${pageKwData.length} phrases, ${newCount} new keywords`);
+}
+
+function stopPageKw(){
+  pageKwAbort=true;
+  finishPageKw();
+}
+
+function filterPageKw(){
+  const q=document.getElementById('pagekw-filter').value.trim().toLowerCase();
+  // Fix 5: include both .pkw-row and .schema-paa-card in filter
+  document.querySelectorAll('.pkw-row, .schema-paa-card').forEach(row=>{
+    if(!q){row.classList.remove('hidden');return;}
+    const match=row.dataset.kw.includes(q)||row.dataset.src.includes(q)||row.dataset.zone.includes(q);
+    row.classList.toggle('hidden',!match);
+  });
+}
+
+function sortPageKw(mode,btn){
+  pkwSortMode=mode;
+  document.querySelectorAll('#pkw-sort-score,#pkw-sort-alpha,#pkw-sort-new').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const container=document.getElementById('pagekw-list');
+  // Fix A: treat .pkw-page-sep + its following .schema-paa-wrap/.pkw-rows as a page group;
+  // sort the page groups as units so PAA cards stay inside their wrap divs.
+  // Build groups: each group starts at a .pkw-page-sep.
+  const children=[...container.children];
+  const groups=[];
+  let cur=null;
+  for(const el of children){
+    if(el.classList.contains('pkw-page-sep')){
+      cur={sep:el,rows:[],score:0,kw:'',isnew:0};
+      groups.push(cur);
+    } else if(cur){
+      cur.rows.push(el);
+      // Aggregate group sort key from member rows/cards
+      const s=parseFloat(el.dataset.score||0);
+      if(s>cur.score) cur.score=s;
+      const k=(el.dataset.kw||'');
+      if(!cur.kw||k<cur.kw) cur.kw=k;
+      if(parseInt(el.dataset.isnew||0)) cur.isnew=1;
+    }
+  }
+  if(!groups.length) return; // nothing to sort
+  if(mode==='score') groups.sort((a,b)=>b.score-a.score);
+  else if(mode==='alpha') groups.sort((a,b)=>a.kw.localeCompare(b.kw));
+  else if(mode==='new') groups.sort((a,b)=>b.isnew-a.isnew);
+  groups.forEach(g=>{
+    container.appendChild(g.sep);
+    g.rows.forEach(r=>container.appendChild(r));
+  });
+}
+
+// ── SERP URL lookup ──────────────────────────────────────────────────────────
+let serpData={google:[],bing:[]};
+let serpAbortCtrl=null;
+
+document.querySelectorAll('input[name="serp-eng"]').forEach(r=>r.addEventListener('change',()=>{
+  document.querySelectorAll('[id^="serp-"]').forEach(b=>{if(b.tagName==='LABEL')b.classList.remove('active-mode');});
+  r.closest('label').classList.add('active-mode');
+}));
+document.querySelectorAll('input[name="serp-src"]').forEach(r=>r.addEventListener('change',()=>{
+  document.querySelectorAll('[id^="serp-src"]').forEach(b=>{if(b.tagName==='LABEL')b.classList.remove('active-mode');});
+  r.closest('label').classList.add('active-mode');
+}));
+
+function getSerpKeywords(){
+  const src=document.querySelector('input[name="serp-src"]:checked').value;
+  const limit=parseInt(document.getElementById('serp-limit').value)||25;
+  let kws=[];
+  if(src==='ac') kws=[...modules.ac];
+  else if(src==='bing') kws=[...modules.bing];
+  else kws=[...seenAll];
+  return dedup(kws).slice(0,limit);
+}
+
+function startSerpLookup(){
+  const kws=getSerpKeywords();
+  if(!kws.length){showToast('No keywords yet — run a search first',true);return;}
+  const engine=document.querySelector('input[name="serp-eng"]:checked').value;
+  const gl=document.getElementById('country-select').value;
+
+  serpData={google:[],bing:[]};
+  document.getElementById('serp-list').innerHTML='';
+  document.getElementById('serp-count').textContent='';
+  document.getElementById('serp-progress').style.display='block';
+  document.getElementById('serp-start-btn').disabled=true;
+  document.getElementById('stop-serp-btn').style.display='inline-block';
+
+  serpAbortCtrl=new AbortController();
+  fetchSerpStream(kws,engine,gl);
+}
+
+async function fetchSerpStream(kws,engine,gl){
+  try{
+    const resp=await fetch('/research/serp',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({keywords:kws,engine,gl}),
+      signal: serpAbortCtrl?.signal
+    });
+    const reader=resp.body.getReader();
+    const decoder=new TextDecoder();
+    let buf='';
+    while(true){
+      const {done,value}=await reader.read();
+      if(done) break;
+      buf+=decoder.decode(value,{stream:true});
+      const lines=buf.split('\n');
+      buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        const raw=line.slice(6).trim();
+        if(!raw) continue;
+        try{
+          const d=JSON.parse(raw);
+          if(d.done){
+            finishSerp();
+            return;
+          }
+          handleSerpEvent(d);
+        }catch(e){}
+      }
+    }
+    finishSerp();
+  }catch(e){
+    if(e.name!=='AbortError') showToast('SERP fetch error: '+e.message,true);
+    finishSerp();
+  }
+}
+
+function handleSerpEvent(d){
+  const pct=Math.round((d.index/d.total)*100);
+  document.getElementById('serp-bar').style.width=pct+'%';
+  document.getElementById('serp-pt').textContent=`[${d.engine.toUpperCase()}] ${d.keyword}`;
+  document.getElementById('serp-pct').textContent=pct+'%';
+
+  const store=serpData[d.engine];
+  store.push({keyword:d.keyword,urls:d.urls});
+
+  // Render card
+  const container=document.getElementById('serp-list');
+  const empty=container.querySelector('.empty-state');if(empty)empty.remove();
+
+  const card=document.createElement('div');
+  card.className='serp-card';
+  card.dataset.engine=d.engine;
+  card.dataset.kw=d.keyword.toLowerCase();
+
+  const engineColor=d.engine==='google'?'var(--accent)':'var(--bing)';
+  const engineLabel=d.engine==='google'?'G':'B';
+  const urlRows=d.urls.map(u=>`
+    <div class="serp-url-row">
+      <span class="serp-rank">${u.rank}</span>
+      <div class="serp-url-info">
+        <a href="${escHtml(u.url)}" target="_blank" rel="noopener" class="serp-url">${escHtml(u.url)}</a>
+        <span class="serp-domain">${escHtml(u.domain)}</span>
+      </div>
+    </div>`).join('');
+
+  // Fix 15: collapsible — URLs hidden by default, click header to expand
+  card.innerHTML=`
+    <div class="serp-card-head" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.serp-toggle').textContent=this.nextElementSibling.classList.contains('open')?'▴':'▾'" style="cursor:pointer;">
+      <span class="serp-engine-badge" style="background:${engineColor}20;color:${engineColor};border:1px solid ${engineColor}40">${engineLabel}</span>
+      <span class="serp-kw-label">${escHtml(d.keyword)}</span>
+      <span class="serp-url-count">${d.urls.length} URLs</span>
+      <span class="serp-toggle" style="font-size:0.65rem;color:var(--muted);margin-left:4px;">▾</span>
+    </div>
+    <div class="serp-urls">${urlRows}</div>`;
+
+  container.appendChild(card);
+  container.scrollTop=container.scrollHeight;
+
+  const total=(serpData.google.length+serpData.bing.length);
+  document.getElementById('serp-count').textContent=`${total} keyword${total!==1?'s':''} fetched`;
+}
+
+function finishSerp(){
+  document.getElementById('serp-progress').style.display='none';
+  document.getElementById('serp-start-btn').disabled=false;
+  document.getElementById('stop-serp-btn').style.display='none';
+  const total=serpData.google.length+serpData.bing.length;
+  // Fix 13: enable page KW button once we have URLs to crawl
+  if(total>0) document.getElementById('pagekw-start-btn').disabled=false;
+  showToast(`✓ SERP done — ${total} keywords × up to 10 URLs each`);
+}
+
+function stopSerpLookup(){
+  if(serpAbortCtrl) serpAbortCtrl.abort();
+  finishSerp();
+}
+
+function filterSerp(){
+  const q=document.getElementById('serp-filter').value.trim().toLowerCase();
+  document.querySelectorAll('.serp-card').forEach(card=>{
+    if(!q){card.classList.remove('hidden');return;}
+    const kw=card.dataset.kw||'';
+    const urls=card.querySelectorAll('.serp-url');
+    const urlMatch=[...urls].some(a=>a.textContent.toLowerCase().includes(q));
+    card.classList.toggle('hidden',!(kw.includes(q)||urlMatch));
+  });
+}
+
+// ── Modifier system ──────────────────────────────────────────────────────────
+const PRESET_MODIFIERS={faq:["how","why","when","where","who","what","which","can","will","does","is","are","should","do"],intent:["best","top","cheap","free","near me","cost of","price of","without","with","for"],compare:["vs","versus","or","alternative to","instead of","compared to"]};
+const chipState={};
+function initChips(){
+  Object.entries(PRESET_MODIFIERS).forEach(([group,words])=>{
+    const c=document.getElementById('chips-'+group);
+    words.forEach(w=>{chipState[w]=true;const chip=document.createElement('span');chip.className='chip on';chip.textContent=w;chip.dataset.mod=w;chip.onclick=()=>toggleChip(chip,w);c.appendChild(chip);});
+  });
+  syncTextFromChips();
+}
+function toggleChip(chip,word){chipState[word]=!chipState[word];chip.classList.toggle('on',chipState[word]);syncTextFromChips();}
+function addCustomChip(){const input=document.getElementById('custom-modifier-input');const val=input.value.trim().toLowerCase();if(!val||chipState.hasOwnProperty(val))return;chipState[val]=true;const chip=document.createElement('span');chip.className='chip custom on';chip.textContent=val;chip.dataset.mod=val;chip.onclick=()=>toggleChip(chip,val);document.getElementById('chips-custom').appendChild(chip);input.value='';syncTextFromChips();}
+function getActiveModifiers(){return Object.entries(chipState).filter(([,v])=>v).map(([k])=>k);}
+function syncTextFromChips(){document.getElementById('modifier-textarea').value=getActiveModifiers().join('\n');updatePatternPreview();}
+function syncChipsFromText(){const lines=document.getElementById('modifier-textarea').value.split('\n').map(l=>l.trim()).filter(Boolean);Object.keys(chipState).forEach(k=>chipState[k]=false);document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));lines.forEach(line=>{if(chipState.hasOwnProperty(line)){chipState[line]=true;document.querySelectorAll(`.chip[data-mod="${line}"]`).forEach(c=>c.classList.add('on'));}else{chipState[line]=true;const chip=document.createElement('span');chip.className='chip custom on';chip.textContent=line;chip.dataset.mod=line;chip.onclick=()=>toggleChip(chip,line);document.getElementById('chips-custom').appendChild(chip);}});updatePatternPreview();}
+function updatePatternPreview(){const mods=getActiveModifiers();document.getElementById('pattern-preview').textContent=`${mods[0]||'how'} * [keyword]  (+${mods.length} total)`;}
+function setModifierView(view){document.getElementById('modifier-chips-view').style.display=view==='chips'?'block':'none';document.getElementById('modifier-text-view').style.display=view==='text'?'block':'none';document.getElementById('mvbtn-chips').classList.toggle('active',view==='chips');document.getElementById('mvbtn-text').classList.toggle('active',view==='text');}
+function getModifierParam(){return getActiveModifiers().join('|');}
+document.querySelectorAll('input[name="ac-mode"]').forEach(radio=>{radio.addEventListener('change',()=>{document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active-mode'));radio.closest('.mode-btn').classList.add('active-mode');const isMod=radio.value==='modifiers'||radio.value==='modifiers_alpha';document.getElementById('modifier-ui').style.display=isMod?'block':'none';});});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function dedup(arr){const s=new Set();const o=[];arr.forEach(k=>{const c=k.trim().toLowerCase();if(c&&!s.has(c)){s.add(c);o.push(c);}});return o;}
+function triggerDownload(content,type,filename){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+function slugify(s){return s.replace(/\s+/g,'-').replace(/[^a-z0-9\-]/gi,'').toLowerCase();}
+function showToast(msg,error=false){const t=document.getElementById('toast');t.textContent=msg;t.className=error?'error show':'show';setTimeout(()=>t.className='',3500);}
+function escHtml(str){
+  // Fix J: encode single quotes too — prevents attribute injection
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function enc(s){return encodeURIComponent(s);}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+initChips();
+renderHistory();
+</script>
+</body>
+</html>
