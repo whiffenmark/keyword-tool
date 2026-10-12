@@ -960,7 +960,89 @@ def export_xlsx():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         as_attachment=True, download_name=f"{slug}-keyword-research.xlsx")
 
+# ── Supabase storage ─────────────────────────────────────────────────────────
+SB_URL = os.environ.get("SUPABASE_URL","").rstrip("/")
+SB_KEY = os.environ.get("SUPABASE_SERVICE_KEY","")
+KW_LIST_MODULES = ["ac","bing","youtube","paa","rel","pasf","reddit","quora"]
+
+def sb(method, table, json_body=None, params=None, prefer="return=representation"):
+    r = requests.request(method, f"{SB_URL}/rest/v1/{table}", json=json_body, params=params,
+        headers={"apikey":SB_KEY,"Authorization":f"Bearer {SB_KEY}",
+                 "Content-Type":"application/json","Prefer":prefer}, timeout=30)
+    r.raise_for_status()
+    return r.json() if r.text else []
+
+def build_items(data):
+    """Turn a research payload into flat (module, keyword, extra) rows."""
+    rows, seen = [], set()
+    def add(module, keyword, extra=None):
+        keyword = (keyword or "").strip()
+        extra = extra or {}
+        key = (module, keyword.lower(), extra.get("url",""), extra.get("rank",""))
+        if keyword and key not in seen:
+            seen.add(key); rows.append({"module":module,"keyword":keyword,"extra":extra})
+    for m in KW_LIST_MODULES:
+        for item in data.get(m, []) or []:
+            if isinstance(item, dict):   # e.g. Reddit/Quora from Atlas: {title, subreddit, url}
+                add(m, item.get("title") or item.get("keyword") or item.get("question") or "",
+                    {k:v for k,v in item.items() if k not in ("title","keyword","question")})
+            else:
+                add(m, str(item))
+    for biz in data.get("local", []) or []:
+        add("local", biz.get("name",""), {k:v for k,v in biz.items() if k!="name"})
+    for src, mod in (("serp_google","serp_google"),("serp_bing","serp_bing")):
+        for entry in data.get(src, []) or []:
+            for u in entry.get("urls", []):
+                add(mod, entry.get("keyword",""), {"rank":u.get("rank"),"url":u.get("url",""),"domain":u.get("domain","")})
+    for e in data.get("page_keywords", []) or []:
+        add("page", e.get("keyword",""), {k:v for k,v in e.items() if k!="keyword"})
+    for e in data.get("schema_paa", []) or []:
+        add("schema_paa", e.get("question",""), {k:v for k,v in e.items() if k!="question"})
+    return rows
+
+def sb_missing():
+    if SB_URL and SB_KEY: return None
+    return jsonify({"error":"Database not configured. Set SUPABASE_URL and SUPABASE_SERVICE_KEY."}), 503
+
+@app.route("/db/status")
+def db_status():
+    return jsonify({"configured": bool(SB_URL and SB_KEY)})
+
+@app.route("/db/save", methods=["POST"])
+def db_save():
+    missing = sb_missing()
+    if missing: return missing
+    data = request.json or {}
+    seed = (data.get("seed") or "").strip()
+    if not seed: return jsonify({"error":"No seed"}), 400
+    rows = build_items(data)
+    if not rows: return jsonify({"error":"Nothing to save"}), 400
+    try:
+        run = sb("POST","kw_runs",{"seed":seed,"country":data.get("gl","us"),
+                                   "source":data.get("source","tool")})[0]
+        for i in range(0, len(rows), 500):
+            sb("POST","kw_items",[dict(r, run_id=run["id"]) for r in rows[i:i+500]], prefer="return=minimal")
+    except requests.RequestException as e:
+        return jsonify({"error":f"Database error: {e}"}), 502
+    return jsonify({"run_id":run["id"],"saved":len(rows)})
+
+@app.route("/db/runs")
+def db_runs():
+    missing = sb_missing()
+    if missing: return missing
+    try:
+        return jsonify(sb("GET","kw_runs",params={"select":"id,seed,country,source,created_at","order":"created_at.desc","limit":"50"}))
+    except requests.RequestException as e:
+        return jsonify({"error":f"Database error: {e}"}), 502
+
+@app.route("/db/runs/<int:run_id>")
+def db_run_items(run_id):
+    missing = sb_missing()
+    if missing: return missing
+    try:
+        return jsonify(sb("GET","kw_items",params={"run_id":f"eq.{run_id}","select":"module,keyword,extra","order":"id.asc","limit":"10000"}))
+    except requests.RequestException as e:
+        return jsonify({"error":f"Database error: {e}"}), 502
+
 if __name__=="__main__":
-    os.makedirs("static",exist_ok=True)
-    import os
-app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)
+    app.run(host="0.0.0.0",port=int(os.environ.get("PORT",5000)),debug=False)

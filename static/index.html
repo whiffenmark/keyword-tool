@@ -463,6 +463,20 @@
   </div>
 </div>
 
+<!-- DATABASE CARD -->
+<div class="card" id="db-card">
+  <div class="card-title"><span>🗄 Database</span><button class="collapsible-btn" onclick="toggleCard('db-body',this)">▾</button></div>
+  <div class="collapsible-body" id="db-body">
+    <button class="btn-xlsx" id="db-save" onclick="saveToDb()" disabled>💾 Save this research to database</button>
+    <div class="xlsx-note" id="db-status">Checking database…</div>
+    <div class="section-label">Import from Atlas (paste JSON)</div>
+    <textarea id="atlas-json" rows="6" style="width:100%;font-family:monospace;font-size:0.72rem;border-radius:8px;padding:8px;box-sizing:border-box;" placeholder='{"seed":"coffee","paa":["..."],"rel":["..."],"pasf":["..."],"reddit":[{"title":"","subreddit":"","url":""}],"quora":[{"title":"","url":""}]}'></textarea>
+    <button class="btn-xlsx" id="atlas-import" onclick="importAtlas()" style="margin-top:7px;">⬆ Save Atlas results</button>
+    <div class="section-label">Saved runs</div>
+    <div id="db-runs"><div class="empty-state" style="padding:14px;">No saved runs loaded</div></div>
+  </div>
+</div>
+
 <!-- HISTORY CARD -->
 <div class="card">
   <div class="card-title">
@@ -705,7 +719,7 @@ function finish(){
   document.getElementById('current-query').textContent='';
   document.getElementById('seed-queue').textContent='';
   KW_MODULES.forEach(m=>document.getElementById('dl-'+m).disabled=modules[m].length===0);
-  document.getElementById('dl-xlsx').disabled=(seenAll.size===0&&localBusinesses.length===0);
+  document.getElementById('dl-xlsx').disabled=(seenAll.size===0&&localBusinesses.length===0);if(typeof updateDbButton==='function')updateDbButton();
   showToast(`✓ Done — ${seenAll.size} unique keywords, ${crossDupes} cross-dupes removed`);
 }
 
@@ -778,6 +792,51 @@ async function downloadXlsx(){
   }catch(e){showToast('Download failed: '+e.message,true);}
   finally{btn.disabled=false;btn.textContent='📊 Download Excel File';}
 }
+
+// ── Database ─────────────────────────────────────────────────────────────────
+let dbConfigured=false;
+async function initDb(){
+  const st=document.getElementById('db-status');
+  try{
+    const r=await fetch('/db/status');dbConfigured=(await r.json()).configured;
+    st.textContent=dbConfigured?'Connected to Supabase.':'Database not set up yet (SUPABASE_URL / SUPABASE_SERVICE_KEY missing).';
+    if(dbConfigured)loadRuns();
+  }catch(e){st.textContent='Could not check database.';}
+  updateDbButton();
+}
+function updateDbButton(){
+  document.getElementById('db-save').disabled=!(dbConfigured&&(seenAll.size>0||localBusinesses.length>0));
+}
+async function postSave(payload,btn,label){
+  btn.disabled=true;btn.textContent='⏳ Saving...';
+  try{
+    const resp=await fetch('/db/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await resp.json();
+    if(!resp.ok){showToast('Error: '+d.error,true);return false;}
+    showToast(`✓ Saved ${d.saved} items to database`);loadRuns();return true;
+  }catch(e){showToast('Save failed: '+e.message,true);return false;}
+  finally{btn.textContent=label;updateDbButton();btn.disabled=btn.id==='db-save'?btn.disabled:!dbConfigured;}
+}
+function saveToDb(){
+  postSave({seed:seedValue,ac:dedup(modules.ac),bing:dedup(modules.bing),youtube:dedup(modules.youtube),paa:dedup(modules.paa),rel:dedup(modules.rel),pasf:dedup(modules.pasf),reddit:dedup(modules.reddit),quora:dedup(modules.quora),local:localBusinesses,serp_google:serpData.google,serp_bing:serpData.bing,page_keywords:pageKwData.filter(k=>!k._paa),schema_paa:pageKwData.filter(k=>k._paa)},
+    document.getElementById('db-save'),'💾 Save this research to database');
+}
+function importAtlas(){
+  let data;
+  try{data=JSON.parse(document.getElementById('atlas-json').value);}catch(e){showToast('That is not valid JSON',true);return;}
+  data.source='atlas';
+  postSave(data,document.getElementById('atlas-import'),'⬆ Save Atlas results').then(ok=>{if(ok)document.getElementById('atlas-json').value='';});
+}
+async function loadRuns(){
+  const c=document.getElementById('db-runs');
+  try{
+    const runs=await (await fetch('/db/runs')).json();
+    if(!Array.isArray(runs)||!runs.length){c.innerHTML='<div class="empty-state" style="padding:14px;">No saved runs yet</div>';return;}
+    c.innerHTML=runs.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:0.78rem;border-bottom:1px solid var(--border,#ddd);"><span>${esc(r.seed)} <span style="opacity:.6">(${esc(r.source)})</span></span><span style="opacity:.6">${new Date(r.created_at).toLocaleDateString()}</span></div>`).join('');
+  }catch(e){}
+}
+function esc(t){const d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML;}
+initDb();
 
 // ── History ──────────────────────────────────────────────────────────────────
 function saveHistory(seed,count){
