@@ -52,7 +52,8 @@ def get_youtube_autocomplete(query):
         r = requests.get("https://suggestqueries.google.com/complete/search",
             params={"client":"youtube","q":query,"hl":"en","gl":"us"}, timeout=10,
             headers={"User-Agent": BASE_HEADERS["User-Agent"]})
-        data = r.json()
+        txt = r.text   # YouTube replies as JSONP: window.google.ac.h([...])
+        data = json.loads(txt[txt.index("(")+1:txt.rindex(")")])
         if len(data) < 2: return []
         return [item[0] for item in data[1]
                 if isinstance(item, list) and len(item) > 0 and isinstance(item[0], str)]
