@@ -25,3 +25,8 @@ create index if not exists kw_runs_seed_idx     on kw_runs(lower(seed));
 -- Locked down: only the server (service key) can read or write.
 alter table kw_runs  enable row level security;
 alter table kw_items enable row level security;
+
+-- Let the server (service_role key) use the tables. Public/anon roles get nothing.
+grant usage on schema public to service_role;
+grant all on kw_runs, kw_items to service_role;
+grant usage, select on all sequences in schema public to service_role;
