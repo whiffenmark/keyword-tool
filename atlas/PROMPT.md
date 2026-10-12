@@ -19,8 +19,12 @@ Hard limit: 6 page loads. This needs 3.
    - every "People also ask" question (expand if allowed, max 3 rounds, no new page loads)
    - every "Related searches" phrase at the bottom
    - "People also search for" phrases if present (keep these separate from related)
-2. reddit.com/search/?q=<seed> : top 15 thread titles, subreddit, link if visible.
-3. quora.com/search?q=<seed> : top 15 question titles, link if visible.
+2. reddit.com/search/?q=<seed> : top 15 thread titles, subreddit, link.
+3. quora.com/search?q=<seed> : top 15 question titles, link.
+   For the links on pages 2 and 3, use browser_console ONCE per page with exactly this single
+   read-only expression (no semicolons, no other code), then match each title to its URL:
+   JSON.stringify([...document.querySelectorAll('a[href]')].map(a=>({t:a.innerText.trim().slice(0,200),h:a.href})).filter(x=>x.t))
+   If it is blocked, leave url empty and say so.
 
 Rules: retry a failed page at most ONCE. Do not troubleshoot, edit config, kill processes or read
 code. On a CAPTCHA, stop that page and note it. Wait 3-5 seconds between pages. Record only what
