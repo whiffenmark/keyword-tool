@@ -46,16 +46,21 @@ def get_bing_autocomplete(query):
         return data[1] if len(data) > 1 else []
     except: return []
 
-# Fix O: guard against bare strings or single-element lists in YouTube suggestions
+# Fix O: guard against bare strings or single-element lists in YouTube suggestions.
+# client=youtube now answers with JSONP (window.google.ac.h(...)), so ask for the YouTube
+# dataset (ds=yt) in the plain-JSON firefox format instead.
 def get_youtube_autocomplete(query):
     try:
         r = requests.get("https://suggestqueries.google.com/complete/search",
-            params={"client":"youtube","q":query,"hl":"en","gl":"us"}, timeout=10,
+            params={"client":"firefox","ds":"yt","q":query,"hl":"en","gl":"us"}, timeout=10,
             headers={"User-Agent": BASE_HEADERS["User-Agent"]})
         data = r.json()
         if len(data) < 2: return []
-        return [item[0] for item in data[1]
-                if isinstance(item, list) and len(item) > 0 and isinstance(item[0], str)]
+        out = []
+        for item in data[1]:
+            if isinstance(item, str): out.append(item)
+            elif isinstance(item, list) and len(item) > 0 and isinstance(item[0], str): out.append(item[0])
+        return out
     except: return []
 
 # Fix C: bounded cache (max 500 entries), cleared between seed runs
